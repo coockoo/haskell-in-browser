@@ -76,5 +76,10 @@ Found [this thing](https://hackage.haskell.org/package/wai) that is called `wai`
 ```sh
 cabal init #
 cabal update # update package list. they don't have autoupdate?
-cabal install wai warp
+cabal install wai warp # for some reason does not work
 ```
+
+Now I can run my Haskell program lik `cabal run`.
+
+Ok, the way to install packages is to add them to the `.cabal` file in `build-depends` section
+and then running `cabal install`.
