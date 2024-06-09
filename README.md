@@ -68,3 +68,13 @@ runghc main.hs
 Let's go over the book and try to do server with HTML rendering.
 
 By [this book](https://learn-haskell.blog/03-html/01-html_content.html)
+
+Nah, this book is about Haskell and not webservers. Let's install local `express` via `cabal`.
+
+Found [this thing](https://hackage.haskell.org/package/wai) that is called `wai`.
+
+```sh
+cabal init #
+cabal update # update package list. they don't have autoupdate?
+cabal install wai warp
+```
