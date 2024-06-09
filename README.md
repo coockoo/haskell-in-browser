@@ -7,6 +7,8 @@ But the language is great with great thought behind it. I remember something, bu
 
 ## Progress
 
+### Installation
+
 Let's start with simple haskel progarm just to remember how this thing works.
 
 Of course, start from the https://www.haskell.org/get-started/
@@ -56,5 +58,13 @@ Now we have binaries. LET'S GO!
 Oh, nice, we have our first program
 
 ```sh
-ghc main.hs && ./main.hs
+ghc main.hs && ./main
+# or
+runghc main.hs
 ```
+
+### Getting to know Haskell a bit more
+
+Let's go over the book and try to do server with HTML rendering.
+
+By [this book](https://learn-haskell.blog/03-html/01-html_content.html)
