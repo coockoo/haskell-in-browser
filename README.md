@@ -83,3 +83,10 @@ Now I can run my Haskell program lik `cabal run`.
 
 Ok, the way to install packages is to add them to the `.cabal` file in `build-depends` section
 and then running `cabal install`.
+
+Let's continue. This is cool, as we already have a basic server on 3000 port.
+
+I'm too procedural to understand how to render HTML using functional language.
+
+But there is a good step-by-step [tutorial](https://jaspervdj.be/blaze/tutorial.html) on how to do that.
+Package is called `blaze-html` and `blaze-<something>` in general. Let's try.
