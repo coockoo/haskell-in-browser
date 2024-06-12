@@ -90,3 +90,31 @@ I'm too procedural to understand how to render HTML using functional language.
 
 But there is a good step-by-step [tutorial](https://jaspervdj.be/blaze/tutorial.html) on how to do that.
 Package is called `blaze-html` and `blaze-<something>` in general. Let's try.
+
+Now let's figure out how to serve HTML and JS file.
+
+Nice, found the way to include `script` tag with `src` via
+
+```hs
+H.script ! A.src "bundle.js" $ ""
+```
+
+Now I see that my backend returns the same html on each request, need to add routing.
+Let's not read from file, but serve raw string from code.
+
+I know that there is such thing as pattern matching and there might be a way of somehow matching request with specific url.
+But maaaan, I lack Haskell knowledge so hard.
+
+Anyways, what is the `$` operator? Search says it's function application operator.
+
+[Here](https://hackage.haskell.org/package/base-4.20.0.1/docs/Data-Function.html#v:-36-) are great examples:
+
+```hs
+strSum :: String -> Int
+strSum s = sum (mapMaybe readMaybe (words s))
+{- equals to -}
+strSum s = sum $ mapMaybe readMaybe $ words s
+```
+
+HAHAHAHA, hell yeah, now we serve JS files from Haskell backend via `responseFile`.
+There is a switch/case. I was randomly closing tabs and found [this page](https://wiki.haskell.org/Web/Servers) with examples.
