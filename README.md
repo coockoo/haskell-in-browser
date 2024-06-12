@@ -118,3 +118,19 @@ strSum s = sum $ mapMaybe readMaybe $ words s
 
 HAHAHAHA, hell yeah, now we serve JS files from Haskell backend via `responseFile`.
 There is a switch/case. I was randomly closing tabs and found [this page](https://wiki.haskell.org/Web/Servers) with examples.
+
+_Fun fact, there is no electricity now in my apartment. Damn russians destroyed our power generation_
+
+Ok, now we can create `WebAssembly` as in the [WASM MDN](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Module).
+Why do we need a `Worker`? I'll try without it.
+
+Cool, initial JS binding is done. Let's try to create a `.wasm` build of Haskell file.
+Probably will need another target in `.cabal` file or something.
+Going through the [GHC WebAssembly guide](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/wasm.html).
+
+Now installing [ghc-wasm-meta](https://gitlab.haskell.org/ghc/ghc-wasm-meta) as in README.
+
+Installed, it exports some executables and initial run of `wasm32-wasi-cabal run` didn't work for some reason.
+Probably I miss something.
+
+Meanwhile, found that I can add `default-extensions: OverloadedStrings` to the `.cabal` file and not to include weird LANGUAGE pragma at the top.
