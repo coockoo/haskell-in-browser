@@ -134,3 +134,22 @@ Installed, it exports some executables and initial run of `wasm32-wasi-cabal run
 Probably I miss something.
 
 Meanwhile, found that I can add `default-extensions: OverloadedStrings` to the `.cabal` file and not to include weird LANGUAGE pragma at the top.
+
+While I was on the break, I had an idea of pattern matching response. Let's try to implement it.
+
+Neat, it worked. Instead of switch-case there is a function `router`.
+
+```hs
+router :: [Text] -> Response
+router ["bundle.js"] = responseFile status200 [("Content-Type", "application/javascript")] "bundle.js" Nothing
+router _ = responseLBS status200 [("Content-Type", "text/html")] $ renderHtml rootHtml
+```
+
+Also, took some time to discover what are monads and implement Maybe/Just/Nothing in typescript.
+Still I don't feel confident, but at least its' moving.
+
+Now, let's continue with packing some entrypoint in wasm module.
+
+First of all, I think we need different executable in `.cabal` file. Fortunately, it supports it.
+
+Created new entrypoint `counter`.
