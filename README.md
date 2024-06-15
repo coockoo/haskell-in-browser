@@ -67,7 +67,7 @@ runghc main.hs
 
 Let's go over the book and try to do server with HTML rendering.
 
-By [this book](https://learn-haskell.blog/03-html/01-html_content.html)
+By [this book][blog].
 
 Nah, this book is about Haskell and not webservers. Let's install local `express` via `cabal`.
 
@@ -83,6 +83,8 @@ Now I can run my Haskell program lik `cabal run`.
 
 Ok, the way to install packages is to add them to the `.cabal` file in `build-depends` section
 and then running `cabal install`.
+
+### Running Haskell server
 
 Let's continue. This is cool, as we already have a basic server on 3000 port.
 
@@ -122,7 +124,9 @@ There is a switch/case. I was randomly closing tabs and found [this page](https:
 _Fun fact, there is no electricity now in my apartment. Damn russians destroyed our power generation_
 
 Ok, now we can create `WebAssembly` as in the [WASM MDN](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Module).
-Why do we need a `Worker`? I'll try without it.
+Why do we need a `Worker`? I'll try without it. (Spoiler, it works without service worker).
+
+### WASM
 
 Cool, initial JS binding is done. Let's try to create a `.wasm` build of Haskell file.
 Probably will need another target in `.cabal` file or something.
@@ -153,3 +157,17 @@ Now, let's continue with packing some entrypoint in wasm module.
 First of all, I think we need different executable in `.cabal` file. Fortunately, it supports it.
 
 Created new entrypoint `counter`.
+
+Apparently, some [wasi shim](https://github.com/bjorn3/browser_wasi_shim) (who knows what it is) is needed for it to work.
+Also, [this thing](https://gitlab.haskell.org/ghc/ghc-wasm-meta#creating-a-wasi-reactor-module-from-wasm32-wasi-ghc) helped a lot.
+And yes, we have now a Haskell server serving Haskell HTML and `.wasm` file and small JS binding. And we can use Haskell function from within JS code.
+Basically, Haskell in browser.
+
+## Learning
+
+It feels like I have a big gap in Haskell knowledge, so I'll start with that [Haskell via sokoban][sokoban] tutorial.
+And then will transition to [cis194][cis194].
+
+[blog]: https://learn-haskell.blog/03-html/01-html_content.html
+[sokoban]: https://haskell-via-sokoban.nomeata.de/
+[cis194]: https://www.cis.upenn.edu/~cis1940/fall16/
