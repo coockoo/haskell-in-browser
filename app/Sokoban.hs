@@ -24,14 +24,13 @@ controller :: State -> Picture
 controller state = lights state & frame
 
 animatedController :: Double -> Picture
-animatedController t = case round t `mod` 6 of
-  0 -> controller Go
-  1 -> controller Go
-  2 -> controller PreStop
-  3 -> controller Stop
-  4 -> controller Stop
-  5 -> controller PreGo
-  _ -> blank
+animatedController t
+  | n == 0 || n == 1 = controller Go
+  | n == 2           = controller PreStop
+  | n == 3 || n == 4 = controller Stop
+  | n == 5           = controller PreGo
+  | otherwise        = blank
+  where n = (round t `mod` 6) :: Integer
 
 main :: IO ()
 main = animationOf animatedController
