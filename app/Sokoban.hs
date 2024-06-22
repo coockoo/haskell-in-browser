@@ -22,14 +22,32 @@ box :: Picture
 box = colored black (rectangle 0.8 0.8) & colored brown (solidRectangle 0.8 0.8) & ground
 
 drawTile :: Integer -> Picture
-drawTile 1 = wall
-drawTile 2 = ground
-drawTile 3 = storage
-drawTile 4 = box
-drawTile _ = blank
+drawTile d
+  | d == 1 = wall
+  | d == 2 = ground
+  | d == 3 = storage
+  | d == 4 = box
+  | otherwise = blank
+
+intToDouble :: Integer -> Double
+intToDouble n = fromIntegral n / 1.0
+
+drawCell :: Integer -> Integer -> Integer -> Picture
+drawCell val x y = translated (intToDouble x) (intToDouble y) (drawTile val)
+
+drawRow :: Integer -> Integer -> Picture
+drawRow y x
+  | val == 0 = blank
+  | otherwise = drawCell val x y & drawRow y (x + 1)
+  where val = maze x y
+
+drawMaze :: Integer -> Picture
+drawMaze y
+  | abs y > 4 = blank
+  | otherwise = drawRow y (-4) & drawMaze (y + 1)
 
 pictureOfMaze :: Picture
-pictureOfMaze = drawTile $ maze 0 0
+pictureOfMaze = drawMaze (-4)
 
 main :: IO ()
 main = drawingOf pictureOfMaze
