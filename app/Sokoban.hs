@@ -32,22 +32,21 @@ drawTile d
 intToDouble :: Integer -> Double
 intToDouble n = fromIntegral n / 1.0
 
-drawCell :: Integer -> Integer -> Integer -> Picture
-drawCell val x y = translated (intToDouble x) (intToDouble y) (drawTile val)
+drawCell :: Integer -> Integer -> Picture
+drawCell x y = translated (intToDouble x) (intToDouble y) (drawTile (maze x y))
 
 drawRow :: Integer -> Integer -> Picture
-drawRow y x
-  | val == 0 = blank
-  | otherwise = drawCell val x y & drawRow y (x + 1)
-  where val = maze x y
+drawRow x y
+  | abs x > 4 = blank
+  | otherwise = drawCell x y & drawRow (x + 1) y
 
-drawMaze :: Integer -> Picture
-drawMaze y
+drawRows :: Integer -> Picture
+drawRows y
   | abs y > 4 = blank
-  | otherwise = drawRow y (-4) & drawMaze (y + 1)
+  | otherwise = drawRow (-4) y & drawRows (y + 1)
 
 pictureOfMaze :: Picture
-pictureOfMaze = drawMaze (-4)
+pictureOfMaze = drawRows (-4)
 
 main :: IO ()
 main = drawingOf pictureOfMaze
