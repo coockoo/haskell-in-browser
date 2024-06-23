@@ -33,20 +33,21 @@ intToDouble :: Integer -> Double
 intToDouble n = fromIntegral n / 1.0
 
 drawCell :: Integer -> Integer -> Picture
-drawCell x y = translated (intToDouble x) (intToDouble y) (drawTile (maze x y))
+drawCell y x = translated (intToDouble x) (intToDouble y) (drawTile (maze x y))
 
-drawRow :: Integer -> Integer -> Picture
-drawRow x y
-  | abs x > 4 = blank
-  | otherwise = drawCell x y & drawRow (x + 1) y
+drawRow :: Integer -> Picture
+drawRow y = drawTimes 4 (drawCell y)
 
-drawRows :: Integer -> Picture
-drawRows y
-  | abs y > 4 = blank
-  | otherwise = drawRow (-4) y & drawRows (y + 1)
+doDrawTimes :: Integer -> Integer -> (Integer -> Picture) -> Picture
+doDrawTimes i m something
+  | abs i > m = blank
+  | otherwise = something i & doDrawTimes (i + 1) m something
+
+drawTimes :: Integer -> (Integer -> Picture) -> Picture
+drawTimes m = doDrawTimes (-m) m
 
 pictureOfMaze :: Picture
-pictureOfMaze = drawRows (-4)
+pictureOfMaze = drawTimes 4 drawRow
 
 main :: IO ()
 main = drawingOf pictureOfMaze
