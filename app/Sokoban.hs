@@ -1,13 +1,17 @@
 import CodeWorld
 
-maze :: Integer -> Integer -> Integer
+data Tile = Wall | Ground | Storage | Box | Blank
+data Dir = U | R | D | L
+data Coord = C Integer Integer
+
+maze :: Integer -> Integer -> Tile
 maze x y
-  | abs x > 4  || abs y > 4  = 0
-  | abs x == 4 || abs y == 4 = 1 -- wall
-  | x ==  2 && y <= 0        = 1 -- wall
-  | x ==  3 && y <= 0        = 3 -- storage
-  | x >= -2 && y == 0        = 4 -- box
-  | otherwise                = 2 -- ground
+  | abs x > 4  || abs y > 4  = Blank
+  | abs x == 4 || abs y == 4 = Wall
+  | x ==  2 && y <= 0        = Wall
+  | x ==  3 && y <= 0        = Storage
+  | x >= -2 && y == 0        = Box
+  | otherwise                = Ground
 
 wall :: Picture
 wall = colored black $ solidRectangle 1 1
@@ -19,21 +23,29 @@ storage :: Picture
 storage = colored yellow (solidCircle 0.1) & ground
 
 box :: Picture
-box = colored black (rectangle 0.8 0.8) & colored brown (solidRectangle 0.8 0.8) & ground
+box =
+  colored black (rectangle s s) &
+  colored brown (solidRectangle s s) &
+  ground
+  where s = 0.8
 
-drawTile :: Integer -> Picture
-drawTile d
-  | d == 1 = wall
-  | d == 2 = ground
-  | d == 3 = storage
-  | d == 4 = box
-  | otherwise = blank
+player :: Integer -> Integer -> Picture
+player x y =
+  translated (fromIntegral x) (fromIntegral y) (
+    colored white (rectangle s s) &
+    colored red (solidRectangle s s)
+  )
+  where s = 0.8
 
-intToDouble :: Integer -> Double
-intToDouble n = fromIntegral n / 1.0
+drawTile :: Tile -> Picture
+drawTile Wall = wall
+drawTile Ground = ground
+drawTile Storage = storage
+drawTile Box = box
+drawTile Blank = blank
 
 drawCell :: Integer -> Integer -> Picture
-drawCell y x = translated (intToDouble x) (intToDouble y) (drawTile (maze x y))
+drawCell y x = translated (fromIntegral x) (fromIntegral y) (drawTile (maze x y))
 
 drawTimes :: Integer -> (Integer -> Picture) -> Picture
 drawTimes m something = go (-m)
@@ -43,11 +55,10 @@ drawTimes m something = go (-m)
       | otherwise = something i & go (i + 1)
 
 pictureOfMaze :: Picture
--- pictureOfMaze = drawTimes 4 (\y -> drawTimes 4 (drawCell y))
+-- pictureOfMaze = drawTimes 4 (\y -> drawTimes 4 (\x -> drawCell y x))
 -- this . (dot) operator was suggested by linter and WOW
 pictureOfMaze = drawTimes m (drawTimes m . drawCell)
-  where
-    m = 4
+  where m = 4
 
 main :: IO ()
-main = drawingOf pictureOfMaze
+main = drawingOf (player 1 1 & pictureOfMaze)
