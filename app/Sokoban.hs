@@ -60,5 +60,24 @@ pictureOfMaze :: Picture
 pictureOfMaze = drawTimes m (drawTimes m . drawCell)
   where m = 4
 
+mazeWithPlayer :: Coord -> Picture
+mazeWithPlayer (C x y) = player x y & pictureOfMaze
+
+initialPos :: Coord
+initialPos = C 0 (-1)
+
+adjacentCoord :: Dir -> Coord -> Coord
+adjacentCoord R (C x y) = C (x+1) y
+adjacentCoord U (C x y) = C  x   (y+1)
+adjacentCoord L (C x y) = C (x-1) y
+adjacentCoord D (C x y) = C  x   (y-1)
+
+handleEvent :: Event -> Coord -> Coord
+handleEvent (KeyPress "Up") c = adjacentCoord U c
+handleEvent (KeyPress "Right") c = adjacentCoord R c
+handleEvent (KeyPress "Down") c = adjacentCoord D c
+handleEvent (KeyPress "Left") c = adjacentCoord L c
+handleEvent _ c = c
+
 main :: IO ()
-main = drawingOf (player 1 1 & pictureOfMaze)
+main = activityOf initialPos handleEvent mazeWithPlayer
