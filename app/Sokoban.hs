@@ -1,6 +1,6 @@
 import CodeWorld
 
-data Tile = Wall | Ground | Storage | Box | Blank
+data Tile = Wall | Ground | Storage | Box | Blank deriving (Eq)
 data Dir = U | R | D | L
 data Coord = C Integer Integer
 
@@ -72,11 +72,23 @@ adjacentCoord U (C x y) = C  x   (y+1)
 adjacentCoord L (C x y) = C (x-1) y
 adjacentCoord D (C x y) = C  x   (y-1)
 
+canMove :: Coord -> Bool
+canMove (C x y)
+  | tg == Storage || tg == Ground = True
+  | otherwise = False
+  where tg = maze x y
+
+withMove :: Dir -> Coord -> Coord
+withMove d c
+  | canMove n = n
+  | otherwise = c
+  where n = adjacentCoord d c
+
 handleEvent :: Event -> Coord -> Coord
-handleEvent (KeyPress "Up") c = adjacentCoord U c
-handleEvent (KeyPress "Right") c = adjacentCoord R c
-handleEvent (KeyPress "Down") c = adjacentCoord D c
-handleEvent (KeyPress "Left") c = adjacentCoord L c
+handleEvent (KeyPress "Up") c = withMove U c
+handleEvent (KeyPress "Right") c = withMove R c
+handleEvent (KeyPress "Down") c = withMove D c
+handleEvent (KeyPress "Left") c = withMove L c
 handleEvent _ c = c
 
 main :: IO ()
