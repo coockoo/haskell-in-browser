@@ -35,20 +35,19 @@ intToDouble n = fromIntegral n / 1.0
 drawCell :: Integer -> Integer -> Picture
 drawCell y x = translated (intToDouble x) (intToDouble y) (drawTile (maze x y))
 
-drawRow :: Integer -> Picture
-drawRow y = drawTimes 4 (drawCell y)
-
-
 drawTimes :: Integer -> (Integer -> Picture) -> Picture
-drawTimes m = go (-m)
+drawTimes m something = go (-m)
   where
-    go :: Integer -> (Integer -> Picture) -> Picture
-    go i something
-      | abs i > m = blank
-      | otherwise = something i & go (i + 1) something
+    go i
+      | i >= m = something i
+      | otherwise = something i & go (i + 1)
 
 pictureOfMaze :: Picture
-pictureOfMaze = drawTimes 4 drawRow
+-- pictureOfMaze = drawTimes 4 (\y -> drawTimes 4 (drawCell y))
+-- this . (dot) operator was suggested by linter and WOW
+pictureOfMaze = drawTimes m (drawTimes m . drawCell)
+  where
+    m = 4
 
 main :: IO ()
 main = drawingOf pictureOfMaze
