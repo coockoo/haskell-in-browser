@@ -38,13 +38,14 @@ drawCell y x = translated (intToDouble x) (intToDouble y) (drawTile (maze x y))
 drawRow :: Integer -> Picture
 drawRow y = drawTimes 4 (drawCell y)
 
-doDrawTimes :: Integer -> Integer -> (Integer -> Picture) -> Picture
-doDrawTimes i m something
-  | abs i > m = blank
-  | otherwise = something i & doDrawTimes (i + 1) m something
 
 drawTimes :: Integer -> (Integer -> Picture) -> Picture
-drawTimes m = doDrawTimes (-m) m
+drawTimes m = go (-m)
+  where
+    go :: Integer -> (Integer -> Picture) -> Picture
+    go i something
+      | abs i > m = blank
+      | otherwise = something i & go (i + 1) something
 
 pictureOfMaze :: Picture
 pictureOfMaze = drawTimes 4 drawRow
