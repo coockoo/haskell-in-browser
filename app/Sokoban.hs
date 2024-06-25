@@ -1,8 +1,9 @@
 import CodeWorld
+import Data.Fixed (E0)
 
 data Tile = Wall | Ground | Storage | Box | Blank deriving (Eq)
 data Dir = U | R | D | L
-data Coord = C Integer Integer
+data Coord = C Integer Integer Dir
 
 maze :: Integer -> Integer -> Tile
 maze x y
@@ -29,13 +30,19 @@ box =
   ground
   where s = 0.8
 
-player :: Integer -> Integer -> Picture
-player x y =
+player :: Coord -> Picture
+player (C x y d) =
   translated (fromIntegral x) (fromIntegral y) (
-    colored white (rectangle s s) &
-    colored red (solidRectangle s s)
+    colored white (polygon line) &
+    colored red (solidPolygon line)
   )
-  where s = 0.8
+  where
+    s = 0.8 / 2
+    line = case d of
+      U -> [(-s, -s), (s, -s), (0, s)]
+      R -> [(-s, s), (-s, -s), (s, 0)]
+      D -> [(-s, s), (s, s), (0, -s)]
+      L -> [(s, -s), (s, s), (-s, 0)]
 
 drawTile :: Tile -> Picture
 drawTile Wall = wall
@@ -61,19 +68,19 @@ pictureOfMaze = drawTimes m (drawTimes m . drawCell)
   where m = 4
 
 mazeWithPlayer :: Coord -> Picture
-mazeWithPlayer (C x y) = player x y & pictureOfMaze
+mazeWithPlayer c = player c & pictureOfMaze
 
 initialPos :: Coord
-initialPos = C 0 (-1)
+initialPos = C 0 (-1) U
 
 adjacentCoord :: Dir -> Coord -> Coord
-adjacentCoord R (C x y) = C (x+1) y
-adjacentCoord U (C x y) = C  x   (y+1)
-adjacentCoord L (C x y) = C (x-1) y
-adjacentCoord D (C x y) = C  x   (y-1)
+adjacentCoord R (C x y _) = C (x+1) y R
+adjacentCoord U (C x y _) = C  x   (y+1) U
+adjacentCoord L (C x y _) = C (x-1) y L
+adjacentCoord D (C x y _) = C  x   (y-1) D
 
 canMove :: Coord -> Bool
-canMove (C x y)
+canMove (C x y _)
   | tg == Storage || tg == Ground = True
   | otherwise = False
   where tg = maze x y
@@ -81,8 +88,10 @@ canMove (C x y)
 withMove :: Dir -> Coord -> Coord
 withMove d c
   | canMove n = n
-  | otherwise = c
-  where n = adjacentCoord d c
+  | otherwise = C x y d
+  where
+    n = adjacentCoord d c
+    (C x y _) = c
 
 handleEvent :: Event -> Coord -> Coord
 handleEvent (KeyPress "Up") c = withMove U c
