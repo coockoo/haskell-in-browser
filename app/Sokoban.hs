@@ -100,5 +100,12 @@ handleEvent (KeyPress "Down") c = withMove D c
 handleEvent (KeyPress "Left") c = withMove L c
 handleEvent _ c = c
 
+resetableActivityOf :: world -> (Event -> world -> world) -> (world -> Picture) -> IO ()
+resetableActivityOf initialState onEvent = activityOf initialState go
+  where
+    go (KeyPress "Esc") _ = initialState
+    go e prev = onEvent e prev
+
+
 main :: IO ()
-main = activityOf initialPos handleEvent mazeWithPlayer
+main = resetableActivityOf initialPos handleEvent mazeWithPlayer
