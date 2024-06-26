@@ -100,12 +100,24 @@ handleEvent (KeyPress "Down") c = withMove D c
 handleEvent (KeyPress "Left") c = withMove L c
 handleEvent _ c = c
 
-resetableActivityOf :: world -> (Event -> world -> world) -> (world -> Picture) -> IO ()
-resetableActivityOf initialState onEvent = activityOf initialState go
-  where
-    go (KeyPress "Esc") _ = initialState
-    go e prev = onEvent e prev
+startScreen :: Picture
+startScreen = scaled 3 3 (lettering "Sokoban!")
 
+data State world = StartScreen | Running world
+
+startScreenActivityOf :: world -> (Event -> world -> world) -> (world -> Picture) -> IO ()
+startScreenActivityOf initialState onEvent draw = activityOf initialState' onEvent' draw'
+  where
+    initialState' = StartScreen
+
+    onEvent' (KeyPress " ") StartScreen = Running initialState
+    onEvent' _ StartScreen = StartScreen
+
+    onEvent' (KeyPress "Esc") (Running _) = StartScreen
+    onEvent' e (Running s) = Running (onEvent e s)
+
+    draw' StartScreen = startScreen
+    draw' (Running s) = draw s
 
 main :: IO ()
-main = resetableActivityOf initialPos handleEvent mazeWithPlayer
+main = startScreenActivityOf initialPos handleEvent mazeWithPlayer
