@@ -1,6 +1,6 @@
 import CodeWorld
 
-data Tile = Wall | Ground | Storage | Box | Blank deriving (Eq)
+data Tile = Wall | Ground | Storage | Box | Blank
 data Dir = U | R | D | L
 -- TODO: this probably needs to be split Coord and Pos
 -- why? boxes have no dif
@@ -85,10 +85,10 @@ adjacentCoord L (C x y _) = C (x-1) y L
 adjacentCoord D (C x y _) = C  x   (y-1) D
 
 canMove :: Coord -> Bool
-canMove (C x y _)
-  | tg == Storage || tg == Ground = True
-  | otherwise = False
-  where tg = maze x y
+canMove (C x y _) = case maze x y of
+  Storage -> True
+  Ground -> True
+  _ -> False
 
 withMove :: Dir -> Coord -> Coord
 withMove d c
@@ -149,5 +149,5 @@ drawBoxes Empty = blank
 drawBoxes (Entry coord rest) = atCoord coord (drawTile Box) & drawBoxes rest
 
 main :: IO ()
--- main = runActivity (resetable (withStartScreen sokoban))
-main = drawingOf (drawBoxes boxes)
+main = runActivity (resetable (withStartScreen sokoban))
+-- main = drawingOf (drawBoxes boxes)
