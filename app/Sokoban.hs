@@ -1,5 +1,4 @@
 import CodeWorld
-import Data.Fixed (E0)
 
 data Tile = Wall | Ground | Storage | Box | Blank deriving (Eq)
 data Dir = U | R | D | L
@@ -105,19 +104,34 @@ startScreen = scaled 3 3 (lettering "Sokoban!")
 
 data State world = StartScreen | Running world
 
-startScreenActivityOf :: world -> (Event -> world -> world) -> (world -> Picture) -> IO ()
-startScreenActivityOf initialState onEvent draw = activityOf initialState' onEvent' draw'
+data Activity world = Activity
+  world
+  (Event -> world -> world)
+  (world -> Picture)
+
+resetable :: Activity world -> Activity world
+resetable (Activity initialState onEvent draw) = Activity initialState onEvent' draw
+  where
+    onEvent' (KeyPress "Esc") _ = initialState
+    onEvent' e s = onEvent e s
+
+withStartScreen :: Activity world -> Activity (State world)
+withStartScreen (Activity initialState onEvent draw) = Activity initialState' onEvent' draw'
   where
     initialState' = StartScreen
 
     onEvent' (KeyPress " ") StartScreen = Running initialState
     onEvent' _ StartScreen = StartScreen
-
-    onEvent' (KeyPress "Esc") (Running _) = StartScreen
     onEvent' e (Running s) = Running (onEvent e s)
 
     draw' StartScreen = startScreen
     draw' (Running s) = draw s
+  
+runActivity :: Activity world -> IO ()
+runActivity (Activity initialState onEvent draw) = activityOf initialState onEvent draw
+
+sokoban :: Activity Coord
+sokoban = Activity initialPos handleEvent mazeWithPlayer
 
 main :: IO ()
-main = startScreenActivityOf initialPos handleEvent mazeWithPlayer
+main = runActivity (resetable (withStartScreen sokoban))
