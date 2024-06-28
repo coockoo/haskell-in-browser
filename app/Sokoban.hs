@@ -2,6 +2,9 @@ import CodeWorld
 
 data Tile = Wall | Ground | Storage | Box | Blank deriving (Eq)
 data Dir = U | R | D | L
+-- TODO: this probably needs to be split Coord and Pos
+-- why? boxes have no dif
+-- data Pos = P Coord Dir
 data Coord = C Integer Integer Dir
 
 maze :: Integer -> Integer -> Tile
@@ -50,8 +53,11 @@ drawTile Storage = storage
 drawTile Box = box
 drawTile Blank = blank
 
+atCoord :: Coord -> Picture -> Picture
+atCoord (C x y _) = translated (fromIntegral x) (fromIntegral y)
+
 drawCell :: Integer -> Integer -> Picture
-drawCell y x = translated (fromIntegral x) (fromIntegral y) (drawTile (maze x y))
+drawCell y x = atCoord (C x y U) (drawTile (maze x y))
 
 drawTimes :: Integer -> (Integer -> Picture) -> Picture
 drawTimes m something = go (-m)
@@ -133,5 +139,15 @@ runActivity (Activity initialState onEvent draw) = activityOf initialState onEve
 sokoban :: Activity Coord
 sokoban = Activity initialPos handleEvent mazeWithPlayer
 
+data List a = Empty | Entry a (List a)
+
+boxes :: List Coord
+boxes = Entry (C (-2) 0 U) (Entry (C (-1) 0 U) (Entry (C 0 0 U) (Entry (C 1 0 U) Empty)))
+
+drawBoxes :: List Coord -> Picture
+drawBoxes Empty = blank
+drawBoxes (Entry coord rest) = atCoord coord (drawTile Box) & drawBoxes rest
+
 main :: IO ()
-main = runActivity (resetable (withStartScreen sokoban))
+-- main = runActivity (resetable (withStartScreen sokoban))
+main = drawingOf (drawBoxes boxes)
