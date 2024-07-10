@@ -1,13 +1,22 @@
 import CodeWorld
 
-data Tile = Wall | Ground | Storage | Box | Blank
+data List a = Empty | Entry a (List a) deriving (Show)
+data Coord = C Integer Integer deriving (Show)
 data Dir = U | R | D | L
--- TODO: this probably needs to be split Coord and Pos
--- why? boxes have no dif
--- data Pos = P Coord Dir
-data Coord = C Integer Integer Dir
+data Pos = Pos Coord Dir
+data State = S Pos (List Coord) 
+data SSState world = StartScreen | Running world
+data Tile = Wall | Ground | Storage | Box | Blank deriving (Eq)
+data Activity world = Activity
+  world
+  (Event -> world -> world)
+  (world -> Picture)
+type Maze = Integer -> Integer -> Tile
 
-maze :: Integer -> Integer -> Tile
+-- mindblow: data type constructor also support partial application
+-- insight: data type constructor is a function too
+
+maze :: Maze
 maze x y
   | abs x > 4  || abs y > 4  = Blank
   | abs x == 4 || abs y == 4 = Wall
@@ -16,25 +25,155 @@ maze x y
   | x >= -2 && y == 0        = Box
   | otherwise                = Ground
 
-wall :: Picture
-wall = colored black $ solidRectangle 1 1
+mazeWithNoBoxes :: Maze
+mazeWithNoBoxes x y = case maze x y of
+  Box -> Ground
+  other -> other
 
-ground :: Picture
-ground = colored grey $ solidRectangle 1 1
+isBox :: List Coord -> Integer -> Integer -> Bool
+isBox Empty _ _ = False
+isBox (Entry (C cx cy) rest) x y
+  | cx == x && cy == y = True 
+  | otherwise = isBox rest x y
 
-storage :: Picture
-storage = colored yellow (solidCircle 0.1) & ground
+mazeWithBoxes :: List Coord -> Maze
+mazeWithBoxes boxes x y
+  | isBox boxes x y = Box
+  | otherwise = mazeWithNoBoxes x y
 
-box :: Picture
-box =
-  colored black (rectangle s s) &
-  colored brown (solidRectangle s s) &
-  ground
-  where s = 0.8
+drawTile :: Tile -> Picture
+drawTile t = case t of
+  Wall -> colored black $ solidRectangle 1 1
+  Ground -> colored grey $ solidRectangle 1 1
+  Storage -> colored yellow (solidCircle 0.1) & drawTile Ground
+  Box ->
+    colored black (rectangle s s) &
+    colored brown (solidRectangle s s) &
+    drawTile Ground
+    where s = 0.8
+  Blank -> blank
 
-player :: Coord -> Picture
-player (C x y d) =
-  translated (fromIntegral x) (fromIntegral y) (
+append :: List a -> a -> List a
+append list item = Entry item list
+
+merge :: List a -> List a -> List a
+merge lf (Entry a rest) = merge (Entry a lf) rest
+merge lf Empty = lf
+
+getTiles :: Integer -> (Integer -> Integer -> Bool) -> List Coord
+-- TODO: I really need to learn that syntax with dot, as it looks rad
+-- function composition
+getTiles n check = mergeTimes n (mergeTimes n . mt)
+  where
+    mt x y = if check x y then Entry (C x y) Empty else Empty
+
+mergeTimes :: Integer -> (Integer -> List a) -> List a
+mergeTimes m something = doTimes m something merge
+
+resetable :: Activity world -> Activity world
+resetable (Activity initialState onEvent draw) = Activity initialState onEvent' draw
+  where
+    onEvent' (KeyPress "Esc") _ = initialState
+    onEvent' e s = onEvent e s
+
+withStartScreen :: Activity world -> Activity (SSState world)
+withStartScreen (Activity initialState onEvent draw) = Activity initialState' onEvent' draw'
+  where
+    initialState' = StartScreen
+
+    onEvent' (KeyPress " ") StartScreen = Running initialState
+    onEvent' _ StartScreen = StartScreen
+    onEvent' e (Running s) = Running (onEvent e s)
+
+    draw' StartScreen = startScreen
+    draw' (Running s) = draw s
+
+    startScreen = scaled 3 3 (lettering "Sokoban!")
+
+runActivity :: Activity world -> IO ()
+runActivity (Activity initialState onEvent draw) = activityOf initialState onEvent draw
+
+initialBoxes :: List Coord
+initialBoxes = getTiles 4 (\x y -> maze x y == Box)
+
+initialState :: State
+initialState = S (Pos (C 0 (-1)) U) initialBoxes
+
+mapList :: (a -> b) -> List a -> List b
+mapList _ Empty = Empty
+mapList f (Entry c cs) = Entry (f c) (mapList f cs)
+
+canMove :: List Coord -> Coord -> Bool -> Bool
+canMove boxes (C x y) isPlayer = case mazeWithBoxes boxes x y of
+  Storage -> True
+  Ground -> True
+  Box -> isPlayer
+  _ -> False
+
+moveBox :: Coord -> Coord -> Coord -> Coord
+moveBox b (C xf yf) to = if xb == xf && yb == yf then to else b
+  where
+    (C xb yb) = b
+
+data Move = Move Coord (List Coord)
+withMove :: Dir -> Coord -> List Coord -> Move
+withMove dir c boxes
+  | playerMoves && boxMoves = Move n (mapList (\b -> moveBox b n nb) boxes)
+  | otherwise = Move c boxes
+  where
+    n = adjacentCoord dir c
+    (C nx ny) = n
+    nb = adjacentCoord dir n
+    playerMoves = canMove boxes n True
+    boxMoves = not (isBox boxes nx ny) || canMove boxes nb False
+
+handleEvent :: Event -> State -> State
+handleEvent (KeyPress k) (S (Pos c dir) boxes) = S (Pos nextPos nextDir) nextBoxes
+  where
+    nextDir = case k of
+      "Up" -> U
+      "Down" -> D
+      "Left" -> L
+      "Right" -> R
+      _ -> dir
+    -- todo: this thing does move even if no arrow key is pressed
+    (Move nextPos nextBoxes) = withMove nextDir c boxes
+  
+handleEvent _ s = s
+
+atCoord :: Coord -> Picture -> Picture
+atCoord (C x y) = translated (fromIntegral x) (fromIntegral y)
+
+draw :: State -> Picture
+draw (S pos boxes) = drawPlayer pos & drawMaze boxes
+
+-- todo:
+-- 1. define & operator on list
+-- 2. make sure this function accepts "a" that has this operator
+doTimes :: Integer -> (Integer -> a) -> (a -> a -> a) -> a
+doTimes m something op = go (-m)
+  where
+    go i
+      | i >= m = something i
+      | otherwise = something i `op` go (i + 1)
+
+drawTimes :: Integer -> (Integer -> Picture) -> Picture
+drawTimes m something = doTimes m something (&)
+
+
+adjacentCoord :: Dir -> Coord -> Coord
+adjacentCoord dir (C x y) = case dir of
+  R -> C (x+1) y
+  L -> C (x-1) y
+  U -> C  x   (y+1)
+  D -> C  x   (y-1)
+
+drawCell :: Maze -> Integer -> Integer -> Picture
+drawCell maze y x = atCoord (C x y) (drawTile (maze x y))
+
+drawPlayer :: Pos -> Picture
+drawPlayer (Pos c d) =
+  atCoord c (
     colored white (polygon line) &
     colored red (solidPolygon line)
   )
@@ -46,108 +185,11 @@ player (C x y d) =
       D -> [(-s, s), (s, s), (0, -s)]
       L -> [(s, -s), (s, s), (-s, 0)]
 
-drawTile :: Tile -> Picture
-drawTile Wall = wall
-drawTile Ground = ground
-drawTile Storage = storage
-drawTile Box = box
-drawTile Blank = blank
+drawMaze :: List Coord -> Picture
+drawMaze boxes = drawTimes 4 (drawTimes 4 . drawCell (mazeWithBoxes boxes))
 
-atCoord :: Coord -> Picture -> Picture
-atCoord (C x y _) = translated (fromIntegral x) (fromIntegral y)
-
-drawCell :: Integer -> Integer -> Picture
-drawCell y x = atCoord (C x y U) (drawTile (maze x y))
-
-drawTimes :: Integer -> (Integer -> Picture) -> Picture
-drawTimes m something = go (-m)
-  where
-    go i
-      | i >= m = something i
-      | otherwise = something i & go (i + 1)
-
-pictureOfMaze :: Picture
--- pictureOfMaze = drawTimes 4 (\y -> drawTimes 4 (\x -> drawCell y x))
--- this . (dot) operator was suggested by linter and WOW
-pictureOfMaze = drawTimes m (drawTimes m . drawCell)
-  where m = 4
-
-mazeWithPlayer :: Coord -> Picture
-mazeWithPlayer c = player c & pictureOfMaze
-
-initialPos :: Coord
-initialPos = C 0 (-1) U
-
-adjacentCoord :: Dir -> Coord -> Coord
-adjacentCoord R (C x y _) = C (x+1) y R
-adjacentCoord U (C x y _) = C  x   (y+1) U
-adjacentCoord L (C x y _) = C (x-1) y L
-adjacentCoord D (C x y _) = C  x   (y-1) D
-
-canMove :: Coord -> Bool
-canMove (C x y _) = case maze x y of
-  Storage -> True
-  Ground -> True
-  _ -> False
-
-withMove :: Dir -> Coord -> Coord
-withMove d c
-  | canMove n = n
-  | otherwise = C x y d
-  where
-    n = adjacentCoord d c
-    (C x y _) = c
-
-handleEvent :: Event -> Coord -> Coord
-handleEvent (KeyPress "Up") c = withMove U c
-handleEvent (KeyPress "Right") c = withMove R c
-handleEvent (KeyPress "Down") c = withMove D c
-handleEvent (KeyPress "Left") c = withMove L c
-handleEvent _ c = c
-
-startScreen :: Picture
-startScreen = scaled 3 3 (lettering "Sokoban!")
-
-data State world = StartScreen | Running world
-
-data Activity world = Activity
-  world
-  (Event -> world -> world)
-  (world -> Picture)
-
-resetable :: Activity world -> Activity world
-resetable (Activity initialState onEvent draw) = Activity initialState onEvent' draw
-  where
-    onEvent' (KeyPress "Esc") _ = initialState
-    onEvent' e s = onEvent e s
-
-withStartScreen :: Activity world -> Activity (State world)
-withStartScreen (Activity initialState onEvent draw) = Activity initialState' onEvent' draw'
-  where
-    initialState' = StartScreen
-
-    onEvent' (KeyPress " ") StartScreen = Running initialState
-    onEvent' _ StartScreen = StartScreen
-    onEvent' e (Running s) = Running (onEvent e s)
-
-    draw' StartScreen = startScreen
-    draw' (Running s) = draw s
-  
-runActivity :: Activity world -> IO ()
-runActivity (Activity initialState onEvent draw) = activityOf initialState onEvent draw
-
-sokoban :: Activity Coord
-sokoban = Activity initialPos handleEvent mazeWithPlayer
-
-data List a = Empty | Entry a (List a)
-
-boxes :: List Coord
-boxes = Entry (C (-2) 0 U) (Entry (C (-1) 0 U) (Entry (C 0 0 U) (Entry (C 1 0 U) Empty)))
-
-drawBoxes :: List Coord -> Picture
-drawBoxes Empty = blank
-drawBoxes (Entry coord rest) = atCoord coord (drawTile Box) & drawBoxes rest
+sokoban :: Activity State
+sokoban = Activity initialState handleEvent draw
 
 main :: IO ()
 main = runActivity (resetable (withStartScreen sokoban))
--- main = drawingOf (drawBoxes boxes)
