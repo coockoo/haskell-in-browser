@@ -132,11 +132,10 @@ canMove boxes (C x y) isPlayer = case mazeWithBoxes boxes x y of
 moveBox :: Coord -> Coord -> Coord -> Coord
 moveBox boxCoord fromCoord toCoord = if boxCoord == fromCoord then toCoord else boxCoord
 
-data Move = Move Coord (List Coord)
-withMove :: Dir -> Coord -> List Coord -> Move
+withMove :: Dir -> Coord -> List Coord -> (Coord, List Coord)
 withMove dir c boxes
-  | playerMoves && boxMoves = Move n (mapList (\b -> moveBox b n nb) boxes)
-  | otherwise = Move c boxes
+  | playerMoves && boxMoves = (n, mapList (\b -> moveBox b n nb) boxes)
+  | otherwise = (c, boxes)
   where
     n = adjacentCoord dir c
     (C nx ny) = n
@@ -147,13 +146,13 @@ withMove dir c boxes
 -- todo: this was done so thing does not move even if no arrow key is pressed
 handleEvent :: Event -> State -> State
 handleEvent (KeyPress "Up") (S (Pos c dir) boxes) = S (Pos nextPos U) nextBoxes
-  where (Move nextPos nextBoxes) = withMove U c boxes
+  where (nextPos, nextBoxes) = withMove U c boxes
 handleEvent (KeyPress "Down") (S (Pos c dir) boxes) = S (Pos nextPos D) nextBoxes
-  where (Move nextPos nextBoxes) = withMove D c boxes
+  where (nextPos, nextBoxes) = withMove D c boxes
 handleEvent (KeyPress "Left") (S (Pos c dir) boxes) = S (Pos nextPos L) nextBoxes
-  where (Move nextPos nextBoxes) = withMove L c boxes
+  where (nextPos, nextBoxes) = withMove L c boxes
 handleEvent (KeyPress "Right") (S (Pos c dir) boxes) = S (Pos nextPos R) nextBoxes
-  where (Move nextPos nextBoxes) = withMove R c boxes
+  where (nextPos, nextBoxes) = withMove R c boxes
 handleEvent _ s = s
 
 atCoord :: Coord -> Picture -> Picture
