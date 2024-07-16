@@ -1,13 +1,13 @@
 import CodeWorld
 
-data List a = Empty | Entry a (List a) deriving (Show)
+data List a = Empty | Entry a (List a) deriving (Eq, Show)
 data Coord = C Integer Integer deriving (Show)
 instance Eq Coord where
   C x1 y1 == C x2 y2 = x1 == x2 && y1 == y2
   c1 /= c2 = not (c1 == c2)
-data Dir = U | R | D | L
-data Pos = Pos Coord Dir
-data State = S Pos (List Coord) 
+data Dir = U | R | D | L deriving (Eq)
+data Pos = Pos Coord Dir deriving (Eq)
+data State = S Pos (List Coord) deriving (Eq)
 data SSState world = StartScreen | Running world
 data Tile = Wall | Ground | Storage | Box | Blank deriving (Eq)
 data Activity world = Activity
@@ -15,6 +15,7 @@ data Activity world = Activity
   (Event -> world -> world)
   (world -> Picture)
 type Maze = Integer -> Integer -> Tile
+data Stack world = Stack world (List world)
 
 -- mindblow: data type constructor also support partial application
 -- insight: data type constructor is a function too
@@ -79,6 +80,21 @@ resetable (Activity initialState onEvent draw) = Activity initialState onEvent' 
     onEvent' (KeyPress "Esc") _ = initialState
     onEvent' e s = onEvent e s
 
+undoable :: (Eq world) => Activity world -> Activity (Stack world)
+undoable (Activity initialState onEvent draw) = Activity initialState' onEvent' draw'
+  where
+    initialState' = Stack initialState Empty
+
+    onEvent' (KeyPress "U") (Stack head Empty) = Stack head Empty
+    onEvent' (KeyPress "U") (Stack head (Entry nextHead tail)) = Stack nextHead tail
+    onEvent' e (Stack head tail)
+      | next == head = Stack head tail
+      | otherwise = Stack next (Entry head tail)
+      where
+        next = onEvent e head
+
+    draw' (Stack head _) = draw head
+
 withStartScreen :: Activity world -> Activity (SSState world)
 withStartScreen (Activity initialState onEvent draw) = Activity initialState' onEvent' draw'
   where
@@ -128,18 +144,16 @@ withMove dir c boxes
     playerMoves = canMove boxes n True
     boxMoves = not (isBox boxes nx ny) || canMove boxes nb False
 
+-- todo: this was done so thing does not move even if no arrow key is pressed
 handleEvent :: Event -> State -> State
-handleEvent (KeyPress k) (S (Pos c dir) boxes) = S (Pos nextPos nextDir) nextBoxes
-  where
-    nextDir = case k of
-      "Up" -> U
-      "Down" -> D
-      "Left" -> L
-      "Right" -> R
-      _ -> dir
-    -- todo: this thing does move even if no arrow key is pressed
-    (Move nextPos nextBoxes) = withMove nextDir c boxes
-  
+handleEvent (KeyPress "Up") (S (Pos c dir) boxes) = S (Pos nextPos U) nextBoxes
+  where (Move nextPos nextBoxes) = withMove U c boxes
+handleEvent (KeyPress "Down") (S (Pos c dir) boxes) = S (Pos nextPos D) nextBoxes
+  where (Move nextPos nextBoxes) = withMove D c boxes
+handleEvent (KeyPress "Left") (S (Pos c dir) boxes) = S (Pos nextPos L) nextBoxes
+  where (Move nextPos nextBoxes) = withMove L c boxes
+handleEvent (KeyPress "Right") (S (Pos c dir) boxes) = S (Pos nextPos R) nextBoxes
+  where (Move nextPos nextBoxes) = withMove R c boxes
 handleEvent _ s = s
 
 atCoord :: Coord -> Picture -> Picture
@@ -193,4 +207,4 @@ sokoban :: Activity State
 sokoban = Activity initialState handleEvent draw
 
 main :: IO ()
-main = runActivity (resetable (withStartScreen sokoban))
+main = runActivity (resetable (withStartScreen (undoable sokoban)))
