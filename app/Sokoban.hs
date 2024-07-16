@@ -2,6 +2,9 @@ import CodeWorld
 
 data List a = Empty | Entry a (List a) deriving (Show)
 data Coord = C Integer Integer deriving (Show)
+instance Eq Coord where
+  C x1 y1 == C x2 y2 = x1 == x2 && y1 == y2
+  c1 /= c2 = not (c1 == c2)
 data Dir = U | R | D | L
 data Pos = Pos Coord Dir
 data State = S Pos (List Coord) 
@@ -32,8 +35,8 @@ mazeWithNoBoxes x y = case maze x y of
 
 isBox :: List Coord -> Integer -> Integer -> Bool
 isBox Empty _ _ = False
-isBox (Entry (C cx cy) rest) x y
-  | cx == x && cy == y = True 
+isBox (Entry coord rest) x y
+  | coord == C x y = True 
   | otherwise = isBox rest x y
 
 mazeWithBoxes :: List Coord -> Maze
@@ -111,9 +114,7 @@ canMove boxes (C x y) isPlayer = case mazeWithBoxes boxes x y of
   _ -> False
 
 moveBox :: Coord -> Coord -> Coord -> Coord
-moveBox b (C xf yf) to = if xb == xf && yb == yf then to else b
-  where
-    (C xb yb) = b
+moveBox boxCoord fromCoord toCoord = if boxCoord == fromCoord then toCoord else boxCoord
 
 data Move = Move Coord (List Coord)
 withMove :: Dir -> Coord -> List Coord -> Move
