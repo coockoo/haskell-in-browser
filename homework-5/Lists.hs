@@ -1,11 +1,8 @@
 halveEvens :: [Integer] -> [Integer]
-halveEvens list = go list 1
-  where
-    go :: Integral a => [a] -> Integer -> [a]
-    go [] _ = []
-    go (x: xs) idx
-      | even idx = (x `div` 2) : go xs (idx + 1)
-      | otherwise = go xs (idx + 1)
+halveEvens [] = []
+halveEvens (x : xs)
+  | even x = (x `div` 2) : halveEvens xs
+  | otherwise = halveEvens xs
 
 main :: IO()
-main = print $ halveEvens [1,2,3,4,5]
+main = print $ halveEvens [6,6,6,3,3,3,2,2,2]
