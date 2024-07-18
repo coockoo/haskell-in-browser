@@ -168,6 +168,75 @@ Basically, Haskell in browser.
 It feels like I have a big gap in Haskell knowledge, so I'll start with that [Haskell via sokoban][sokoban] tutorial.
 And then will transition to [cis194][cis194].
 
+## Semigroup
+
+- non-empty set S;
+- binary operation ⋅ (where ⋅ :: S → S → S);
+
+That satisfies **Associativity**
+
+For all a, b, c ∈ S, the equation (a ⋅ b) ⋅ c = a ⋅ (b ⋅ c) holds.
+
+## Monoid
+
+Semigroup (set S, operation ⋅, **Associativity**)
+
+That has **Identity element**
+
+There exists an element e in S such that for every element a in S,
+the equalities e ⋅ a = a and a ⋅ e = a hold.
+
+## Group
+
+Monoid (set S, operation ⋅, **Associativity**, **Identity element**)
+
+That has **Inverse element**
+
+For each a in S, there exists an element b in G
+such that a ⋅ b = e and b ⋅ a = e,
+where e is the identity element.
+
+## Abelian group
+
+Group (set S, operation ⋅, **Associativity**, **Identity element**, **Inverse element**)
+
+That satisfies **Commutativity**
+
+For all a, b in S, a ⋅ b = b ⋅ a
+
+There is also a **non-abelian/non-commutative group** that does not satisfy **Commutativity**.
+
+## Ring
+
+- set S with 2 binary operations + and ⋅;
+- (S, +) is abelian group;
+- (S, ⋅) is monoid;
+
+That satisfies **Distributivity** of ⋅ with respect to +
+
+- a · (b + c) = (a · b) + (a · c) for all a, b, c in R (left distributivity).
+- (b + c) · a = (b · a) + (c · a) for all a, b, c in R (right distributivity).
+
+## Commutative ring
+
+Ring
+
+Where · satisfies **Commutativity** (like abelian group, but without inverse element).
+
+For all a, b in S, a ⋅ b = b ⋅ a
+
+For example, integer numbers is a commutative ring.
+
+## Field
+
+Commutative ring
+
+Where
+
+- there exist two distinct elements 0 and 1 in S such that a + 0 = a and a ⋅ 1 = a.
+- 0 ≠ 1
+- all nonzero elements are invertible under multiplication;
+
 [blog]: https://learn-haskell.blog/03-html/01-html_content.html
 [sokoban]: https://haskell-via-sokoban.nomeata.de/
 [cis194]: https://www.cis.upenn.edu/~cis1940/fall16/
