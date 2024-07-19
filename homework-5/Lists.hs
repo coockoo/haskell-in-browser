@@ -1,16 +1,10 @@
 import Data.Char (isAscii)
 
 halveEvens :: [Integer] -> [Integer]
-halveEvens [] = []
-halveEvens (x : xs)
-  | even x = (x `div` 2) : halveEvens xs
-  | otherwise = halveEvens xs
+halveEvens = foldr (\x acc -> if even x then (x `div` 2) : acc else acc) []
 
 safeString :: String -> String
-safeString [] = []
-safeString (x : xs)
-  | isAscii x = x : safeString xs
-  | otherwise = '_' : safeString xs
+safeString = foldr (\x acc -> (if isAscii x then x else '_') : acc) ""
 
 main :: IO()
 main = print $ safeString "🙋.o"
