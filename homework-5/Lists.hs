@@ -56,4 +56,3 @@ main =
   <> putStr "commas: " <> print (commas ["Hello", "World", "Kappa"])
   <> putStr "addPolynomials: " <> print (addPolynomials [[0, 1, 5], [7, 0, 0], [-2, -1, 5]])
   <> putStr "sumNumbers: " <> print (sumNumbers "words0are1234separated12by3integers45678")
-
