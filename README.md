@@ -237,6 +237,14 @@ Where
 - 0 ≠ 1
 - all nonzero elements are invertible under multiplication;
 
+## Monads
+
+Monads are just monoids on the category of endofunctors.
+
+## Endofuctor
+
+A functor that maps a category to that same category; e.g., polynomial functor.
+
 [blog]: https://learn-haskell.blog/03-html/01-html_content.html
 [sokoban]: https://haskell-via-sokoban.nomeata.de/
 [cis194]: https://www.cis.upenn.edu/~cis1940/fall16/

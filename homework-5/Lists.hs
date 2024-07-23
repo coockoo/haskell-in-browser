@@ -1,6 +1,6 @@
-import Data.Char (isAscii, isNumber, digitToInt)
+import Data.Char (isAscii, isNumber)
 import Data.Semigroup (Semigroup(stimes))
-import Data.List (maximumBy)
+import Data.List (maximumBy, intercalate)
 import Data.Function (on)
 
 -- challenge for this homework is not to use recursive functions directly,
@@ -29,12 +29,10 @@ adjacents list = zipWith go [0..] clone
     go i l = firstAndLast $ take 2 $ drop i l
 
 commas :: [String] -> String
-commas list = unwords $ zipWith go [0 ..] list
-  where
-    go i l = if i == length list - 1 then l else l ++ ","
+commas = intercalate ", "
 
 addPolynomials :: [[Integer]] -> [Integer]
-addPolynomials list = foldr (zipWith (+)) (head list) (drop 1 list)
+addPolynomials = foldr1 (zipWith (+))
 
 sumNumbers :: String -> Integer
 sumNumbers str = res
@@ -42,7 +40,7 @@ sumNumbers str = res
     (res, _) = foldr go (0, 1) str
     go :: Char -> (Integer, Integer) -> (Integer, Integer)
     go el (acc, times) = if isNumber el
-                         then (acc + times * toInteger (digitToInt el), times * 10)
+                         then (acc + times * read [el], times * 10)
                          else (acc, 1)
 
 main :: IO()
