@@ -52,6 +52,62 @@ nats = streamIterate (+ 1) 0
 ruler :: Stream Integer
 ruler = streamInterleave (streamRepeat 0) (streamMap (+ 1) ruler)
 
+-- exercise 3: supply monad
+data Supply s a = S (Stream s -> (a, Stream s))
+
+get :: Supply s s
+get = S (\(Cons x xs) -> (x, xs))
+
+pureSupply :: a -> Supply s a
+pureSupply x = S (\xs -> (x, xs))
+
+mapFirstTuple :: (a -> c) -> (a, b) -> (c, b)
+mapFirstTuple f (a, b) = (f a, b)
+
+mapFirstTuple2 :: (a -> b -> c) -> (a, d) -> (b, e) -> (c, d)
+mapFirstTuple2 f (a, d) (b, _) = (f a b, d)
+
+mapSupply :: (a -> b) -> Supply s a -> Supply s b
+mapSupply f (S sf) = S (mapFirstTuple f . sf)
+
+mapSupply2 :: (a -> b -> c) -> Supply s a -> Supply s b -> Supply s c
+mapSupply2 f (S sf1) (S sf2) = S go
+ where
+   go stream = mapFirstTuple2 f (sf1 stream) (sf2 stream)
+
+bindSupply :: Supply s a -> (a -> Supply s b) -> Supply s b
+bindSupply (S sf) f = S go
+  where
+    go stream = sf' s
+      where
+        (a, s) = sf stream
+        (S sf') = f a
+
+runSupply :: Stream s -> Supply s a -> a
+runSupply stream (S sf) = fst $ sf stream
+
+instance Functor (Supply s) where
+  fmap = mapSupply
+
+instance Applicative (Supply s) where
+  pure = pureSupply
+  (<*>) = mapSupply2 id
+
+instance Monad (Supply s) where
+  (>>=) = bindSupply
+
+data Tree a = Node (Tree a) (Tree a) | Leaf a deriving Show
+
+labelTree :: Tree a -> Tree Integer
+labelTree t = runSupply nats (go t)
+  where
+    go :: Tree a -> Supply s (Tree s)
+    go (Leaf _) = fmap Leaf get
+    go (Node l r) = do
+      l' <- go l
+      r' <- go r
+      return (Node l' r')
+
 main :: IO ()
 main = do
   putStrLn "Homework 7: Laziness"
@@ -64,3 +120,8 @@ main = do
   putStrLn ("streamInterleave: " ++ show (streamInterleave (streamRepeat (0 :: Integer)) (streamRepeat 1)))
   putStrLn ("nats: " ++ show nats)
   putStrLn ("ruler: " ++ show ruler)
+  putStrLn "Exercise 3: The Supply monad"
+  let l = Leaf ()
+  let n = Node
+  let t = n (n (n l l) l) (n l l)
+  putStrLn ("labelTree: " ++ show (labelTree t))
